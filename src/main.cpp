@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Stepper.h>
 
 void setup() {
   Serial.begin(9600);
