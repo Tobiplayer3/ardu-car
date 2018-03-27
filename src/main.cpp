@@ -32,3 +32,7 @@ void loop() {
 void drive(int distance){
 
 }
+
+void rotate(int direction, int amount){
+
+}
