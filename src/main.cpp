@@ -3,6 +3,7 @@
 
 bool on = false;
 int steps = 100;
+bool automatic = true;
 
 int motorR[] = {0,2,1,3};
 Stepper stepperR = Stepper(steps, motorR[0], motorR[1], motorR[2], motorR[3]);
@@ -17,15 +18,20 @@ int ultraSonicL[] = {6,7};
 // ultrasonic 2
 int ultraSonicF[] = {8,9};
 
-bool automatic = true;
+enum direction {
+  LEFT,
+  RIGHT,
+  FRONT
+};
+
 
 // declare methods to access them
-float getDistance(int id);
+float getDistance(direction direction);
 int getHighestDistance();
 void drive(int steps);
 void rotate(int degree);
-int* getUltraSonicByID(int id);
-bool isDistanceTooLow(int id);
+int* getUltraSonic(direction direction);
+bool isDistanceTooLow(direction direction);
 
 void setup() {
   Serial.begin(9600);
@@ -36,12 +42,12 @@ void loop() {
     Serial.read();
 
     if(automatic && on){
-      if(isDistanceTooLow(0)){
+      if(isDistanceTooLow(RIGHT)){
 
-      }else if(isDistanceTooLow(1)){
+      }else if(isDistanceTooLow(LEFT)){
 
-      }else if(isDistanceTooLow(2)){
-        if(getDistance(0) >= getDistance(1)){
+      }else if(isDistanceTooLow(FRONT)){
+        if(getDistance(RIGHT) >= getDistance(LEFT)){
           rotate(90);
         }else{
           rotate(-90);
@@ -71,9 +77,9 @@ void rotate(int degree){
 }
 
 int getHighestDistance(){
-  float distanceR = getDistance(0);
-  float distanceL = getDistance(1);
-  float distanceF = getDistance(2);
+  float distanceR = getDistance(RIGHT);
+  float distanceL = getDistance(LEFT);
+  float distanceF = getDistance(FRONT);
 
   if(distanceR >= distanceL && distanceR >= distanceF){
     return 0;
@@ -85,8 +91,8 @@ int getHighestDistance(){
 }
 
 // check if the distance between the ultrasonic and the wall is too low
-bool isDistanceTooLow(int id){
-  float distance = getDistance(id);
+bool isDistanceTooLow(direction direction){
+  float distance = getDistance(direction);
   if(distance < 5){
     return true;
   }
@@ -94,8 +100,8 @@ bool isDistanceTooLow(int id){
 }
 
 // get distance from ultrasonic in cm
-float getDistance(int id){
-  int* ultraSonic = getUltraSonicByID(id);
+float getDistance(direction direction){
+  int* ultraSonic = getUltraSonic(direction);
   digitalWrite(ultraSonic[0], LOW);
   digitalWrite(ultraSonic[0], HIGH);
   digitalWrite(ultraSonic[0], LOW);
@@ -104,10 +110,10 @@ float getDistance(int id){
   return (duration/2) * 0.03432;
 }
 
-int* getUltraSonicByID(int id){
-  switch (id) {
-    case 0: return ultraSonicR;
-    case 1: return ultraSonicL;
-    case 2: return ultraSonicF;
+int* getUltraSonic(direction direction){
+  switch (direction) {
+    case RIGHT: return ultraSonicR;
+    case LEFT: return ultraSonicL;
+    case FRONT: return ultraSonicF;
   }
 }
