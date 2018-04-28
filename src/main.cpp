@@ -6,8 +6,6 @@ int steps = 100;
 bool automatic = true;
 bool left = true;
 bool right = true;
-int leftMillis = 0;
-int rightMillis = 0;
 int rpm = 30;
 
 int motorR[] = {0,2,1,3};
@@ -64,6 +62,7 @@ void loop() {
     0: turn on
     1: set automatic
     2: set manual
+    3: set speed
 
     manual:
     4: forwards
@@ -103,9 +102,13 @@ void loop() {
           break;
         case 5:
           rotate(RIGHT);
+          drive(10);
+          rotate(FRONT);
           break;
         case 6:
           rotate(LEFT);
+          drive(10);
+          rotate(FRONT);
           break;
       }
     }
@@ -115,15 +118,11 @@ void loop() {
 // drive a distance in steps
 void drive(int steps){
   for(int i = 0; i < steps; i++){
-    if(left || millis() - leftMillis >= 1000){
+    if(left){
       stepperL.step(1);
-      left = true;
-      leftMillis = 0;
     }
-    if(right || millis() - rightMillis >= 1000){
+    if(right){
       stepperR.step(1);
-      right = true;
-      rightMillis = 0;
     }
   }
 }
@@ -133,13 +132,14 @@ void rotate(direction direction){
   switch(direction) {
     case LEFT:
       left = false;
-      leftMillis = millis();
       break;
     case RIGHT:
       right = false;
-      rightMillis = millis();
       break;
-    case FRONT: break;
+    case FRONT:
+      right = true;
+      left = true;
+      break;
   }
 }
 
