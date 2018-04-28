@@ -4,6 +4,11 @@
 bool on = false;
 int steps = 100;
 bool automatic = true;
+bool left = true;
+bool right = true;
+int leftMillis = 0;
+int rightMillis = 0;
+int rpm = 30;
 
 int motorR[] = {0,2,1,3};
 Stepper stepperR = Stepper(steps, motorR[0], motorR[1], motorR[2], motorR[3]);
@@ -34,6 +39,8 @@ bool isDistanceTooLow(direction direction);
 
 void setup() {
   Serial.begin(9600);
+  stepperL.setSpeed(rpm);
+  stepperR.setSpeed(rpm);
 }
 
 void test(){
@@ -47,8 +54,11 @@ void test(){
 }
 
 void loop() {
-  while(Serial.available() > 0){
-    int input = Serial.read();
+  int nextAction = 0;
+
+  // check for Serial inputs
+  if(Serial.available() > 0){
+    nextAction = Serial.read();
 
     /*
     0: turn on
@@ -56,44 +66,81 @@ void loop() {
     2: set manual
 
     manual:
-    3: forwards
-    4: right
-    5: left
+    4: forwards
+    5: right
+    6: left
     */
-    switch(input){
-      case 0: on = true;
-      case 1: automatic = true;
-              break;
-      case 2: automatic = false;
-              break;
-      case 3: break;
-      case 4: break;
-      case 5: break;
-      default: break;
+    switch(nextAction){
+      case 0:
+        on = true;
+        break;
+      case 1:
+        automatic = true;
+        break;
+      case 2:
+        automatic = false;
+        break;
+      case 3:
+        rpm = Serial.read();
+        stepperL.setSpeed(rpm);
+        stepperR.setSpeed(rpm);
+        break;
     }
   }
 
+  // handle driving
   if(on){
+    // automatic driving
     if(automatic){
       drive(100);
-    }else{
+      // TODO
 
+    // manual driving
+    }else{
+      switch (nextAction) {
+        case 4:
+          drive(10);
+          break;
+        case 5:
+          rotate(RIGHT);
+          break;
+        case 6:
+          rotate(LEFT);
+          break;
+      }
     }
   }
-
 }
 
 // drive a distance in steps
 void drive(int steps){
   for(int i = 0; i < steps; i++){
-    stepperL.step(1);
-    stepperR.step(1);
+    if(left || millis() - leftMillis >= 1000){
+      stepperL.step(1);
+      left = true;
+      leftMillis = 0;
+    }
+    if(right || millis() - rightMillis >= 1000){
+      stepperR.step(1);
+      right = true;
+      rightMillis = 0;
+    }
   }
 }
 
-// rotate in degree, probably useless
-void rotate(int degree){
-
+// rotate
+void rotate(direction direction){
+  switch(direction) {
+    case LEFT:
+      left = false;
+      leftMillis = millis();
+      break;
+    case RIGHT:
+      right = false;
+      rightMillis = millis();
+      break;
+    case FRONT: break;
+  }
 }
 
 direction getHighestDistance(){
