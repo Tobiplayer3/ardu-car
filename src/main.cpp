@@ -24,10 +24,9 @@ enum direction {
   FRONT
 };
 
-
 // declare methods to access them
 float getDistance(direction direction);
-int getHighestDistance();
+direction getHighestDistance();
 void drive(int steps);
 void rotate(int degree);
 int* getUltraSonic(direction direction);
@@ -37,30 +36,51 @@ void setup() {
   Serial.begin(9600);
 }
 
+void test(){
+  drive(100);
+  Serial.print("Right: ");
+  Serial.println(getDistance(RIGHT));
+  Serial.print("Left: ");
+  Serial.println(getDistance(LEFT));
+  Serial.print("Front: ");
+  Serial.println(getDistance(FRONT));
+}
+
 void loop() {
-  if(Serial.available() > 0){
-    Serial.read();
+  while(Serial.available() > 0){
+    int input = Serial.read();
 
-    if(automatic && on){
-      if(isDistanceTooLow(RIGHT)){
+    /*
+    0: turn on
+    1: set automatic
+    2: set manual
 
-      }else if(isDistanceTooLow(LEFT)){
+    manual:
+    3: forwards
+    4: right
+    5: left
+    */
+    switch(input){
+      case 0: on = true;
+      case 1: automatic = true;
+              break;
+      case 2: automatic = false;
+              break;
+      case 3: break;
+      case 4: break;
+      case 5: break;
+      default: break;
+    }
+  }
 
-      }else if(isDistanceTooLow(FRONT)){
-        if(getDistance(RIGHT) >= getDistance(LEFT)){
-          rotate(90);
-        }else{
-          rotate(-90);
-        }
-      }
-
-      drive(steps);
-
+  if(on){
+    if(automatic){
+      drive(100);
     }else{
 
     }
-
   }
+
 }
 
 // drive a distance in steps
@@ -71,22 +91,22 @@ void drive(int steps){
   }
 }
 
-// rotate in degree
+// rotate in degree, probably useless
 void rotate(int degree){
 
 }
 
-int getHighestDistance(){
+direction getHighestDistance(){
   float distanceR = getDistance(RIGHT);
   float distanceL = getDistance(LEFT);
   float distanceF = getDistance(FRONT);
 
   if(distanceR >= distanceL && distanceR >= distanceF){
-    return 0;
+    return RIGHT;
   }else if(distanceL >= distanceR && distanceL >= distanceF){
-    return 1;
+    return LEFT;
   }else{
-    return 2;
+    return FRONT;
   }
 }
 
