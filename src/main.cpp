@@ -65,7 +65,7 @@ void loop() {
 
 // drive a distance in steps
 void drive(int steps){
-  for(int i = 0; i > steps; i++){
+  for(int i = 0; i < steps; i++){
     stepperL.step(1);
     stepperR.step(1);
   }
