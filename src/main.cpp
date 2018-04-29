@@ -31,7 +31,7 @@ enum direction {
 float getDistance(direction direction);
 direction getHighestDistance();
 void drive(int steps);
-void rotate(int degree);
+void rotate(direction direction);
 int* getUltraSonic(direction direction);
 bool isDistanceTooLow(direction direction);
 
