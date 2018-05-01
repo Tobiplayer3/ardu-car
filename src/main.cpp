@@ -2,60 +2,45 @@
 #include <Stepper.h>
 
 bool on = false;
-int steps = 100;
-bool automatic = true;
+int steps = 1024;
+bool automatic = false;
 bool left = true;
 bool right = true;
-int rpm = 30;
+int rpm = 20;
 
-int motorR[] = {0,2,1,3};
-Stepper stepperR = Stepper(steps, motorR[0], motorR[1], motorR[2], motorR[3]);
+Stepper stepperR = Stepper(steps, 7, 9, 6, 8);
+Stepper stepperL = Stepper(steps, 4, 6, 5, 7);
 
-int motorL[] = {4,6,5,7};
-Stepper stepperL = Stepper(steps, motorL[0], motorL[1], motorL[2], motorL[3]);
+int ultraSonicR = 2;
+int ultraSonicL = 4;
+int ultraSonicF = 5;
+int ultraSonicTrigger = 3;
 
-// ultrasonic 0
-int ultraSonicR[] = {4,5};
-// ultrasonic 1
-int ultraSonicL[] = {6,7};
-// ultrasonic 2
-int ultraSonicF[] = {8,9};
-
-enum direction {
-  LEFT,
-  RIGHT,
-  FRONT
-};
+enum direction { LEFT, RIGHT, FRONT };
 
 // declare methods to access them
 float getDistance(direction direction);
 direction getHighestDistance();
-void drive(int steps);
+void drive(int steps, bool forward);
 void rotate(direction direction);
-int* getUltraSonic(direction direction);
+int getUltraSonic(direction direction);
 bool isDistanceTooLow(direction direction);
 
 void setup() {
   Serial.begin(9600);
   stepperL.setSpeed(rpm);
   stepperR.setSpeed(rpm);
-}
-
-void test(){
-  drive(100);
-  Serial.print("Right: ");
-  Serial.println(getDistance(RIGHT));
-  Serial.print("Left: ");
-  Serial.println(getDistance(LEFT));
-  Serial.print("Front: ");
-  Serial.println(getDistance(FRONT));
+  pinMode(ultraSonicR, INPUT);
+  pinMode(ultraSonicL, INPUT);
+  pinMode(ultraSonicF, INPUT);
+  pinMode(ultraSonicTrigger, OUTPUT);
 }
 
 void loop() {
   int nextAction = 0;
 
   // check for Serial inputs
-  if(Serial.available() > 0){
+  if (Serial.available() > 0) {
     nextAction = Serial.read();
 
     /*
@@ -65,122 +50,132 @@ void loop() {
     3: set speed
 
     manual:
-    4: forwards
+    4: forward
     5: right
     6: left
     */
-    switch(nextAction){
-      case 0:
-        on = true;
-        break;
-      case 1:
-        automatic = true;
-        break;
-      case 2:
-        automatic = false;
-        break;
-      case 3:
-        rpm = Serial.read();
-        stepperL.setSpeed(rpm);
-        stepperR.setSpeed(rpm);
-        break;
+    switch (nextAction) {
+    case 0:
+      on = true;
+      break;
+    case 1:
+      automatic = true;
+      break;
+    case 2:
+      automatic = false;
+      break;
     }
   }
 
   // handle driving
-  if(on){
+  if (on) {
     // automatic driving
-    if(automatic){
-      drive(100);
+    if (automatic) {
+      drive(100, true);
       // TODO
 
-    // manual driving
-    }else{
+      // manual driving
+    } else {
       switch (nextAction) {
-        case 4:
-          drive(10);
-          break;
-        case 5:
-          rotate(RIGHT);
-          drive(10);
-          rotate(FRONT);
-          break;
-        case 6:
-          rotate(LEFT);
-          drive(10);
-          rotate(FRONT);
-          break;
+      case 4:
+        drive(1024, true);
+        break;
+      case 5:
+        rotate(RIGHT);
+        drive(1024, true);
+        rotate(FRONT);
+        break;
+      case 6:
+        rotate(LEFT);
+        drive(1024, true);
+        rotate(FRONT);
+        break;
+      case 7:
+        drive(1024, false);
+        break;
       }
     }
   }
 }
 
 // drive a distance in steps
-void drive(int steps){
-  for(int i = 0; i < steps; i++){
-    if(left){
-      stepperL.step(1);
-    }
-    if(right){
-      stepperR.step(1);
+void drive(int steps, bool forward) {
+  for (int i = 0; i < steps; i++) {
+    if (forward) {
+      if (left) {
+        stepperL.step(1);
+      }
+      if (right) {
+        stepperR.step(1);
+      }
+    } else {
+      if (left) {
+        stepperL.step(-1);
+      }
+      if (right) {
+        stepperR.step(-1);
+      }
     }
   }
 }
 
 // rotate
-void rotate(direction direction){
-  switch(direction) {
-    case LEFT:
-      left = false;
-      break;
-    case RIGHT:
-      right = false;
-      break;
-    case FRONT:
-      right = true;
-      left = true;
-      break;
+void rotate(direction direction) {
+  switch (direction) {
+  case LEFT:
+    left = false;
+    break;
+  case RIGHT:
+    right = false;
+    break;
+  case FRONT:
+    right = true;
+    left = true;
+    break;
   }
 }
 
-direction getHighestDistance(){
+direction getHighestDistance() {
   float distanceR = getDistance(RIGHT);
   float distanceL = getDistance(LEFT);
   float distanceF = getDistance(FRONT);
 
-  if(distanceR >= distanceL && distanceR >= distanceF){
+  if (distanceR >= distanceL && distanceR >= distanceF) {
     return RIGHT;
-  }else if(distanceL >= distanceR && distanceL >= distanceF){
+  } else if (distanceL >= distanceR && distanceL >= distanceF) {
     return LEFT;
-  }else{
+  } else {
     return FRONT;
   }
 }
 
 // check if the distance between the ultrasonic and the wall is too low
-bool isDistanceTooLow(direction direction){
+bool isDistanceTooLow(direction direction) {
   float distance = getDistance(direction);
-  if(distance < 5){
+  if (distance < 5) {
     return true;
   }
   return false;
 }
 
 // get distance from ultrasonic in cm
-float getDistance(direction direction){
-  int* ultraSonic = getUltraSonic(direction);
-  digitalWrite(ultraSonic[0], LOW);
-  digitalWrite(ultraSonic[0], HIGH);
-  digitalWrite(ultraSonic[0], LOW);
+float getDistance(direction direction) {
+  int ultraSonic = getUltraSonic(direction);
+  digitalWrite(ultraSonicTrigger, LOW);
+  digitalWrite(ultraSonicTrigger, HIGH);
+  digitalWrite(ultraSonicTrigger, LOW);
 
-  float duration = pulseIn(ultraSonic[1], HIGH);
-  return (duration/2) * 0.03432;
+  float duration = pulseIn(ultraSonic, HIGH);
+  return (duration / 2) * 0.03432;
 }
 
-int* getUltraSonic(direction direction){
+int getUltraSonic(direction direction) {
   switch (direction) {
-    case RIGHT: return ultraSonicR;
-    case LEFT: return ultraSonicL;
-    case FRONT: return ultraSonicF;
+  case RIGHT:
+    return ultraSonicR;
+  case LEFT:
+    return ultraSonicL;
+  case FRONT:
+    return ultraSonicF;
   }
 }
