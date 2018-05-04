@@ -7,6 +7,7 @@ bool automatic = false;
 bool left = true;
 bool right = true;
 int rpm = 20;
+char nextAction;
 
 Stepper stepperR = Stepper(steps, 7, 9, 6, 8);
 Stepper stepperL = Stepper(steps, 4, 6, 5, 7);
@@ -19,12 +20,12 @@ int ultraSonicTrigger = 3;
 enum direction { LEFT, RIGHT, FRONT };
 
 // declare methods to access them
-float getDistance(direction direction);
+float getDistance(direction dir);
 direction getHighestDistance();
 void drive(int steps, bool forward);
-void rotate(direction direction);
-int getUltraSonic(direction direction);
-bool isDistanceTooLow(direction direction);
+void rotate(direction dir);
+int getUltraSonic(direction dir);
+bool isDistanceTooLow(direction dir);
 
 void setup() {
   Serial.begin(9600);
@@ -37,33 +38,31 @@ void setup() {
 }
 
 void loop() {
-  int nextAction = 0;
-
   // check for Serial inputs
   if (Serial.available() > 0) {
     nextAction = Serial.read();
 
     /*
-    0: turn on
-    1: set automatic
-    2: set manual
-    3: set speed
+      0: turn on
+      1: set automatic
+      2: set manual
+      3: set speed
 
-    manual:
-    4: forward
-    5: right
-    6: left
+      manual:
+      4: forward
+      5: right
+      6: left
     */
     switch (nextAction) {
-    case 0:
-      on = true;
-      break;
-    case 1:
-      automatic = true;
-      break;
-    case 2:
-      automatic = false;
-      break;
+      case '0':
+        on = true;
+        break;
+      case '1':
+        automatic = true;
+        break;
+      case '2':
+        automatic = false;
+        break;
     }
   }
 
@@ -71,28 +70,44 @@ void loop() {
   if (on) {
     // automatic driving
     if (automatic) {
-      drive(100, true);
+      drive(1, true);
+      if(isDistanceTooLow(FRONT)){
+        direction dir = getHighestDistance();
+        if(!isDistanceTooLow(dir)){
+          rotate(dir);
+          drive(1024, true);
+          rotate(FRONT);
+        }
+      }else if(isDistanceTooLow(RIGHT)){
+        if(isDistanceTooLow(LEFT)){
+
+        }
+      }else if(isDistanceTooLow(LEFT)){
+        if(isDistanceTooLow(RIGHT)){
+
+        }
+      }
       // TODO
 
-      // manual driving
+    // manual driving
     } else {
       switch (nextAction) {
-      case 4:
-        drive(1024, true);
-        break;
-      case 5:
-        rotate(RIGHT);
-        drive(1024, true);
-        rotate(FRONT);
-        break;
-      case 6:
-        rotate(LEFT);
-        drive(1024, true);
-        rotate(FRONT);
-        break;
-      case 7:
-        drive(1024, false);
-        break;
+        case '4':
+          drive(1, true);
+          break;
+        case '5':
+          rotate(RIGHT);
+          drive(1, true);
+          rotate(FRONT);
+          break;
+        case '6':
+          rotate(LEFT);
+          drive(1, true);
+          rotate(FRONT);
+          break;
+        case '7':
+          drive(1024, false);
+          break;
       }
     }
   }
@@ -119,39 +134,37 @@ void drive(int steps, bool forward) {
   }
 }
 
-// rotate
-void rotate(direction direction) {
-  switch (direction) {
-  case LEFT:
-    left = false;
-    break;
-  case RIGHT:
-    right = false;
-    break;
-  case FRONT:
-    right = true;
-    left = true;
-    break;
+// rotate by blocking selected tires
+void rotate(direction dir) {
+  switch (dir) {
+    case LEFT:
+      left = false;
+      break;
+    case RIGHT:
+      right = false;
+      break;
+    case FRONT:
+      right = true;
+      left = true;
+      break;
   }
 }
 
+// return right or left depending on the highest distance
 direction getHighestDistance() {
   float distanceR = getDistance(RIGHT);
   float distanceL = getDistance(LEFT);
-  float distanceF = getDistance(FRONT);
 
-  if (distanceR >= distanceL && distanceR >= distanceF) {
+  if (distanceR >= distanceL) {
     return RIGHT;
-  } else if (distanceL >= distanceR && distanceL >= distanceF) {
-    return LEFT;
   } else {
-    return FRONT;
+    return LEFT;
   }
 }
 
 // check if the distance between the ultrasonic and the wall is too low
-bool isDistanceTooLow(direction direction) {
-  float distance = getDistance(direction);
+bool isDistanceTooLow(direction dir) {
+  float distance = getDistance(dir);
   if (distance < 5) {
     return true;
   }
@@ -159,8 +172,8 @@ bool isDistanceTooLow(direction direction) {
 }
 
 // get distance from ultrasonic in cm
-float getDistance(direction direction) {
-  int ultraSonic = getUltraSonic(direction);
+float getDistance(direction dir) {
+  int ultraSonic = getUltraSonic(dir);
   digitalWrite(ultraSonicTrigger, LOW);
   digitalWrite(ultraSonicTrigger, HIGH);
   digitalWrite(ultraSonicTrigger, LOW);
@@ -169,13 +182,14 @@ float getDistance(direction direction) {
   return (duration / 2) * 0.03432;
 }
 
-int getUltraSonic(direction direction) {
-  switch (direction) {
-  case RIGHT:
-    return ultraSonicR;
-  case LEFT:
-    return ultraSonicL;
-  case FRONT:
-    return ultraSonicF;
+// returns the pin of the ultrasonic
+int getUltraSonic(direction dir) {
+  switch (dir) {
+    case RIGHT:
+      return ultraSonicR;
+    case LEFT:
+      return ultraSonicL;
+    case FRONT:
+      return ultraSonicF;
   }
 }
