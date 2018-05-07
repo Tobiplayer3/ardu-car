@@ -1,26 +1,26 @@
 #include <Arduino.h>
 #include <Stepper.h>
 
-bool on = false;
-int steps = 1024;
-bool automatic = false;
-bool left = true;
-bool right = true;
-int rpm = 20;
-char nextAction;
+bool an = false;
+int schritte = 1024;
+bool automatisch = false;
+bool links = true;
+bool rechts = true;
+int upm = 20;
+char naechsteAktion;
 
 Stepper stepperR = Stepper(steps, 7, 9, 6, 8);
 Stepper stepperL = Stepper(steps, 4, 6, 5, 7);
 
-int ultraSonicR = 2;
-int ultraSonicL = 4;
-int ultraSonicF = 5;
-int ultraSonicTrigger = 3;
+int ultraSchallR = 2;
+int ultraSchallL = 4;
+int ultraSchallF = 5;
+int ultraSchallAusloeser = 3;
 
-enum direction { LEFT, RIGHT, FRONT };
+enum direction { links, rechts, front };
 
 // declare methods to access them
-float getDistance(direction dir);
+float erhalteDistanz(direction dir);
 direction getHighestDistance();
 void drive(int steps, bool forward);
 void rotate(direction dir);
