@@ -26,11 +26,11 @@ void drive(int steps, direction dir);
 void rotate(direction dir);
 int getUltraSonic(direction dir);
 bool isDistanceTooLow(direction dir, int maxDistance);
+void setSpeed();
 
 void setup() {
   Serial.begin(9600);
-  stepperL.setSpeed(rpm);
-  stepperR.setSpeed(rpm);
+  setSpeed();
   pinMode(ultraSonicR, INPUT);
   pinMode(ultraSonicL, INPUT);
   pinMode(ultraSonicF, INPUT);
@@ -43,25 +43,31 @@ void loop() {
     nextAction = Serial.read();
 
     /*
-      0: turn on
-      1: set automatic
-      2: set manual
-      3: set speed
+      0: toggle status
+      1: toggle automatic
+      2: increase speed
+      3: decrease speed
 
       manual:
       4: forward
       5: right
       6: left
+      7: backward
     */
     switch (nextAction) {
       case '0':
-        on = true;
+        on = !on;
         break;
       case '1':
-        automatic = true;
+        automatic = !automatic;
         break;
       case '2':
-        automatic = false;
+        rpm += 1;
+        setSpeed();
+        break;
+      case '3':
+        rpm -= 1;
+        setSpeed();
         break;
     }
   }
@@ -196,4 +202,9 @@ int getUltraSonic(direction dir) {
     case FRONT:
       return ultraSonicF;
   }
+}
+
+void setSpeed(){
+  stepperL.setSpeed(rpm);
+  stepperR.setSpeed(rpm);
 }
