@@ -22,10 +22,10 @@ enum direction { LEFT, RIGHT, FRONT };
 // declare methods to access them
 float getDistance(direction dir);
 direction getHighestDistance();
-void drive(int steps, bool forward);
+void drive(int steps, direction dir);
 void rotate(direction dir);
 int getUltraSonic(direction dir);
-bool isDistanceTooLow(direction dir);
+bool isDistanceTooLow(direction dir, int maxDistance);
 
 void setup() {
   Serial.begin(9600);
@@ -71,21 +71,17 @@ void loop() {
     // automatic driving
     if (automatic) {
       drive(1, FRONT);
-      if(isDistanceTooLow(FRONT)){
+      if(isDistanceTooLow(FRONT, 5)){
         direction dir = getHighestDistance();
-        if(!isDistanceTooLow(dir)){
+        if(!isDistanceTooLow(dir, 5)){
           rotate(dir);
           drive(1, FRONT);
           rotate(FRONT);
         }
-      }else if(isDistanceTooLow(RIGHT)){
-        if(isDistanceTooLow(LEFT)){
+      }else if(isDistanceTooLow(RIGHT, 5)){
 
-        }
-      }else if(isDistanceTooLow(LEFT)){
-        if(isDistanceTooLow(RIGHT)){
+      }else if(isDistanceTooLow(LEFT, 5)){
 
-        }
       }
       // TODO
 
@@ -171,9 +167,9 @@ direction getHighestDistance() {
 }
 
 // check if the distance between the ultrasonic and the wall is too low
-bool isDistanceTooLow(direction dir) {
+bool isDistanceTooLow(direction dir, int maxDistance) {
   float distance = getDistance(dir);
-  if (distance < 5) {
+  if (distance < maxDistance) {
     return true;
   }
   return false;
