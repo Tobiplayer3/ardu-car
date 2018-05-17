@@ -70,12 +70,12 @@ void loop() {
   if (on) {
     // automatic driving
     if (automatic) {
-      drive(1, true);
+      drive(1, FRONT);
       if(isDistanceTooLow(FRONT)){
         direction dir = getHighestDistance();
         if(!isDistanceTooLow(dir)){
           rotate(dir);
-          drive(1024, true);
+          drive(1, FRONT);
           rotate(FRONT);
         }
       }else if(isDistanceTooLow(RIGHT)){
@@ -93,20 +93,16 @@ void loop() {
     } else {
       switch (nextAction) {
         case '4':
-          drive(1, true);
+          drive(1, FRONT);
           break;
         case '5':
-          rotate(RIGHT);
-          drive(1, true);
-          rotate(FRONT);
+          drive(1, RIGHT);
           break;
         case '6':
-          rotate(LEFT);
-          drive(1, true);
-          rotate(FRONT);
+          drive(1, LEFT);
           break;
         case '7':
-          drive(1024, false);
+          drive(-1, FRONT);
           break;
       }
     }
@@ -114,7 +110,16 @@ void loop() {
 }
 
 // drive a distance in steps
-void drive(int steps, bool forward) {
+void drive(int steps, direction dir) {
+  //drive backwards if steps are negative
+  bool forward = true;
+  if(steps > 0){
+    forward = false;
+    steps = abs(steps);
+  }
+
+  rotate(dir);
+
   for (int i = 0; i < steps; i++) {
     if (forward) {
       if (left) {
@@ -132,6 +137,9 @@ void drive(int steps, bool forward) {
       }
     }
   }
+
+  rotate(FRONT);
+
 }
 
 // rotate by blocking selected tires
